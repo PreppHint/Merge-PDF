@@ -5,4 +5,4 @@
 Live Demo:- [Merge PDF](https://www.prepphint.com/2026/06/merge-pdf.html)
 
 ## Screenshot
-![Screenshot Capture - 2025-01-28 - 13-23-14](https://github.com/user-attachments/assets/86b383a7-51c2-4d5e-a1b3-1413d6308c43)
+<img width="1130" height="701" alt="Screenshot 2026-11-09 155224" src="https://github.com/user-attachments/assets/87bc1746-8dd6-4911-ba06-5559f7ad997d" />
