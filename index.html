@@ -1,0 +1,492 @@
+<p style="text-align: center;"><b>PDF Merger</b> is a fast and easy online tool that lets you merge multiple PDF files into one. Simply upload or drag and drop PDF files, and the tool instantly combines them. You can reorder pages, remove files, preview the first page, and download in PDF format. Created by team<span class="company fw-bold"><a href="https://www.youtube.com/@prepphint" style="text-decoration-line: none;"> PreppHint</a></span>.</p>
+
+<style>
+    input, select { display: block; margin-bottom: 10px; }
+
+    .custom-upload-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #ccc;
+        border-radius: 10px;
+        width: 100%;
+        height: 500px;
+        background-color: #fff;
+        overflow: hidden;
+        margin-top: 15px;
+        box-sizing: border-box;
+    }
+
+    .custom-upload-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 20px;
+        width: 100%;
+        height: 100%;
+    }
+
+    .custom-upload-icon { width: 100px; margin-bottom: 10px; }
+
+    .custom-preview-container {
+        display: none;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: center;
+        overflow-y: auto;
+        width: 100%;
+        height: 500px;
+        padding: 15px 10px;
+        box-sizing: border-box;
+        gap: 8px;
+    }
+
+    .custom-preview-item {
+        position: relative;
+        width: 100px;
+        height: 150px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        cursor: move;
+        background-color: #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        overflow: hidden;
+        flex-shrink: 0;
+        user-select: none;
+    }
+
+    .custom-preview-item canvas {
+        width: 100%;
+        height: 120px;
+        display: block;
+    }
+
+    .preview-label {
+        font-size: 9px;
+        color: #333;
+        padding: 2px 4px;
+        text-align: center;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        background: #e8e8e8;
+        box-sizing: border-box;
+        flex-shrink: 0;
+    }
+
+    .remove-button {
+        position: absolute;
+        top: 3px;
+        right: 3px;
+        background: rgba(255,255,255,0.9);
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+    }
+
+    .remove-button:hover { background: rgba(255,200,200,0.95); }
+    .remove-button svg { width: 16px; height: 16px; }
+
+    .custom-browse-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+        margin-top: 10px;
+    }
+    .custom-browse-button:hover { background-color: #0056b3; }
+
+    input[type="file"] { display: none; }
+
+    .custom-button-container {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .custom-merge-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .custom-merge-button:disabled { background-color: #ccc; cursor: not-allowed; }
+    .custom-merge-button:hover:enabled { background-color: #0056b3; }
+
+    .custom-download-button {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .custom-download-button:hover { background-color: #1e7e34; }
+
+    .spinner-overlay {
+        display: none;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background-color: rgba(255,255,255,0.75);
+        z-index: 10;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .spinner {
+        border: 6px solid #f3f3f3;
+        border-top: 6px solid #007bff;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 0.9s linear infinite;
+    }
+
+    .spinner-text {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    @keyframes spin {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+        color: red;
+        margin-top: 10px;
+        font-size: 14px;
+        padding: 8px 12px;
+        background: #fff0f0;
+        border: 1px solid #ffcccc;
+        border-radius: 5px;
+        display: none;
+    }
+
+    /* Sortable drag ghost style */
+    .sortable-ghost {
+        opacity: 0.4;
+        border: 2px dashed #007bff;
+    }
+</style>
+
+<div class="custom-upload-container" id="uploadContainer">
+    <div class="custom-preview-container" id="previewContainer"></div>
+    <div class="custom-upload-area" id="uploadArea">
+        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgg_ouhpX4UtbX0KBYXHkXcDk-pOfCHuHt7Adh73oK5PipdyNLvrzX2e4Ufmy9HB1rHqYM5TEViq-1PrvZ6tFHp5C9R4BeMwnsZMdWLrFEJ_yplQ5eN2hzB49uHRrhuuRQZnKo0Vo8Zm6zyT2IAwm8z3hezH2Dc2tZiiHmSJASKbkDT0YyJHDiOEgokRKBD/s1600/upload.webp"
+             alt="Upload Icon" class="custom-upload-icon">
+        <p id="uploadText">Drag &amp; Drop PDF Files here or</p>
+        <button class="custom-browse-button" id="browseBtn">Browse Files</button>
+        <input type="file" id="fileInput" accept="application/pdf" multiple>
+    </div>
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="spinnerText">Merging PDFs...</div>
+    </div>
+</div>
+
+<div class="error-message" id="errorMessage"></div>
+
+<div class="custom-button-container">
+    <button class="custom-merge-button" id="mergeBtn" disabled>Merge PDFs</button>
+    <a id="downloadBtn" class="custom-download-button" style="display:none;">⬇ Download Merged PDF</a>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.8.335/build/pdf.min.js"></script>
+<script>
+/*
+(C) prepphint.com all rights reserved.
+*/
+
+// unpkg worker — fixes MIME type issues on some CDNs
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://unpkg.com/pdfjs-dist@2.8.335/build/pdf.worker.min.js';
+
+const fileMap         = new Map(); // DOM node → File
+let sortableInstance  = null;
+let lastObjectURL     = null;
+
+const fileInput        = document.getElementById('fileInput');
+const previewContainer = document.getElementById('previewContainer');
+const uploadArea       = document.getElementById('uploadArea');
+const uploadContainer  = document.getElementById('uploadContainer');
+const mergeBtn         = document.getElementById('mergeBtn');
+const downloadBtn      = document.getElementById('downloadBtn');
+const spinnerOverlay   = document.getElementById('spinnerOverlay');
+const spinnerText      = document.getElementById('spinnerText');
+const errorMessage     = document.getElementById('errorMessage');
+
+// ── Event Listeners ───────────────────────────────────────────────
+document.getElementById('browseBtn').addEventListener('click', () => {
+    fileInput.value = '';
+    fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+uploadContainer.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadContainer.style.borderColor = '#007bff';
+});
+
+uploadContainer.addEventListener('dragleave', (e) => {
+    if (!uploadContainer.contains(e.relatedTarget)) {
+        uploadContainer.style.borderColor = '#ccc';
+    }
+});
+
+uploadContainer.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    uploadContainer.style.borderColor = '#ccc';
+    handleFiles(e.dataTransfer.files);
+});
+
+mergeBtn.addEventListener('click', mergePDFs);
+
+// ── Read File → Uint8Array via FileReader (most reliable) ─────────
+function readFileAsUint8Array(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            const binaryStr = atob(base64);
+            const bytes = new Uint8Array(binaryStr.length);
+            for (let i = 0; i < binaryStr.length; i++) {
+                bytes[i] = binaryStr.charCodeAt(i);
+            }
+            resolve(bytes);
+        };
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+    });
+}
+
+// ── Render PDF First Page onto Canvas ────────────────────────────
+async function renderPDFPreview(file, canvas) {
+    try {
+        const bytes = await readFileAsUint8Array(file);
+        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+
+        const rawViewport = page.getViewport({ scale: 1 });
+        const scale = 96 / rawViewport.width;
+        const viewport = page.getViewport({ scale });
+
+        canvas.width  = viewport.width;
+        canvas.height = viewport.height;
+
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        page.cleanup();
+    } catch (err) {
+        console.error('Preview failed:', file.name, err);
+        const ctx = canvas.getContext('2d');
+        canvas.width = 96; canvas.height = 120;
+        ctx.fillStyle = '#e0e0e0';
+        ctx.fillRect(0, 0, 96, 120);
+        ctx.fillStyle = '#999';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PDF', 48, 52);
+        ctx.font = '10px sans-serif';
+        ctx.fillText('No Preview', 48, 68);
+    }
+}
+
+// ── Handle Uploaded Files ─────────────────────────────────────────
+async function handleFiles(files) {
+    hideDownloadButton();
+    hideError();
+    let hasInvalid = false;
+
+    for (const file of files) {
+        if (file.type !== 'application/pdf') {
+            hasInvalid = true;
+            continue;
+        }
+
+        const previewItem = document.createElement('div');
+        previewItem.classList.add('custom-preview-item');
+        fileMap.set(previewItem, file);
+
+        // Remove button
+        const removeButton = document.createElement('button');
+        removeButton.classList.add('remove-button');
+        removeButton.title = 'Remove';
+        removeButton.innerHTML = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M16.95 8.464a1 1 0 1 0-1.414-1.414L12 10.586 8.465 7.05A1 1 0 0 0 7.05
+            8.464L10.586 12 7.05 15.536a1 1 0 1 0 1.415 1.414L12 13.414l3.536 3.536a1 1
+            0 1 0 1.414-1.414L13.414 12z" fill="#cc0000"/></svg>`;
+        removeButton.addEventListener('click', () => {
+            fileMap.delete(previewItem);
+            previewItem.remove();
+            hideDownloadButton();
+            if (fileMap.size === 0) sortableInstance = null;
+            updateState();
+        });
+
+        // Canvas for preview
+        const canvas = document.createElement('canvas');
+
+        // Filename label
+        const label = document.createElement('div');
+        label.classList.add('preview-label');
+        label.textContent = file.name;
+        label.title = file.name;
+
+        previewItem.appendChild(canvas);
+        previewItem.appendChild(label);
+        previewItem.appendChild(removeButton);
+        previewContainer.appendChild(previewItem);
+
+        // Render async — non-blocking
+        renderPDFPreview(file, canvas);
+    }
+
+    if (hasInvalid) {
+        showError('Some files were skipped — only PDF files are supported.');
+    }
+
+    // Init Sortable only once
+    if (!sortableInstance && previewContainer.children.length > 0) {
+        sortableInstance = new Sortable(previewContainer, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: () => hideDownloadButton()
+        });
+    }
+
+    updateState();
+}
+
+// ── Merge all PDFs ────────────────────────────────────────────────
+async function mergePDFs() {
+    if (fileMap.size === 0) return;
+
+    hideDownloadButton();
+    hideError();
+
+    if (lastObjectURL) {
+        URL.revokeObjectURL(lastObjectURL);
+        lastObjectURL = null;
+    }
+
+    spinnerText.textContent = 'Merging PDFs...';
+    spinnerOverlay.style.display = 'flex';
+    mergeBtn.disabled = true;
+
+    try {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        const orderedItems = Array.from(previewContainer.children);
+        let processed = 0;
+
+        for (const item of orderedItems) {
+            const file = fileMap.get(item);
+            if (!file) continue;
+            processed++;
+            spinnerText.textContent = `Merging ${processed} of ${orderedItems.length}...`;
+
+            const bytes = await readFileAsUint8Array(file);
+            const pdf = await PDFLib.PDFDocument.load(bytes);
+            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+        }
+
+        const mergedPdfBytes = await mergedPdf.save();
+        const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+        lastObjectURL = URL.createObjectURL(blob);
+
+        setTimeout(() => {
+            spinnerOverlay.style.display = 'none';
+            mergeBtn.disabled = false;
+            downloadBtn.href = lastObjectURL;
+            downloadBtn.download = 'merged_prepphint.com.pdf';
+            downloadBtn.style.display = 'inline-block';
+        }, 800);
+
+    } catch (err) {
+        showError('Merge failed: ' + err.message);
+        spinnerOverlay.style.display = 'none';
+        mergeBtn.disabled = false;
+    }
+}
+
+// ── UI State Manager ──────────────────────────────────────────────
+function updateState() {
+    const hasFiles = fileMap.size > 0;
+    mergeBtn.disabled = !hasFiles;
+
+    if (hasFiles) {
+        uploadArea.style.display = 'none';
+        previewContainer.style.display = 'flex';
+        uploadContainer.style.justifyContent = 'flex-start';
+        uploadContainer.style.alignItems = 'flex-start';
+
+        // Center cards if content fits; scroll from top if overflowing
+        requestAnimationFrame(() => {
+            const isOverflowing =
+                previewContainer.scrollHeight > previewContainer.clientHeight;
+            previewContainer.style.alignContent = isOverflowing ? 'flex-start' : 'center';
+        });
+    } else {
+        uploadArea.style.display = 'flex';
+        previewContainer.style.display = 'none';
+        uploadContainer.style.justifyContent = 'center';
+        uploadContainer.style.alignItems = 'center';
+        sortableInstance = null;
+    }
+}
+
+function hideDownloadButton() {
+    downloadBtn.style.display = 'none';
+    downloadBtn.href = '#';
+}
+
+function showError(msg) {
+    errorMessage.textContent = msg;
+    errorMessage.style.display = 'block';
+}
+
+function hideError() {
+    errorMessage.style.display = 'none';
+    errorMessage.textContent = '';
+}
+</script>
